@@ -19,6 +19,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,6 +29,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -40,34 +42,53 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import com.example.carsharing.ChooseCarViewModel
 import com.example.carsharing.R
+import org.koin.androidx.compose.getViewModel
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ChooseCar() {
 
-    val uriList = mutableListOf<String>(
-        "https://polinka.top/uploads/posts/2023-05/1684989385_polinka-top-p-kartinka-mashini-na-belom-fone-vkontakte-10.png",
-        "https://www.1zoom.me/big/55/69974-Nika.jpg",
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSXS16QY5VJrGSGqsVdtWBPXmx1bnMD89I5Ow&usqp=CAU"
-    )
+    val viewModel: ChooseCarViewModel = getViewModel()
 
+    val carList by viewModel.carsList.observeAsState(emptyList())
+    viewModel.getCars()
 
     val pageState = rememberPagerState {
-        uriList.size
+        carList.size
     }
-
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.End
+    ) {
+        Card(
+            shape = CircleShape
+        ) {
+            AsyncImage(
+                modifier = Modifier.size(50.dp),
+                model = "https://cdn-icons-png.flaticon.com/512/3177/3177440.png",
+                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
+                error = painterResource(id = R.drawable.ic_launcher_foreground),
+                contentDescription = "The delasign logo",
+                contentScale = ContentScale.Crop
+            )
+        }
+    }
     Column(
         modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+
         Box(modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 40.dp)) {
 
             HorizontalPager(
                 state = pageState,
                 key = {
-                    uriList[it]
+                    carList[it]
                 }
             ) { i ->
                 Column(
@@ -77,7 +98,7 @@ fun ChooseCar() {
                     Card {
                         AsyncImage(
                             modifier = Modifier.size(250.dp, 200.dp),
-                            model = uriList[i],
+                            model = carList[i].imageUrl,
                             placeholder = painterResource(id = R.drawable.ic_launcher_background),
                             error = painterResource(id = R.drawable.ic_launcher_foreground),
                             contentDescription = "The delasign logo",
@@ -85,14 +106,14 @@ fun ChooseCar() {
                         )
                     }
                     Text(
-                        text = "car $i",
+                        text = carList[i].mark,
                         fontSize = 28.sp,
                         fontWeight = FontWeight(550)
                     )
 
 
                     LazyColumn(modifier = Modifier.height(210.dp)) {
-                        items(uriList.count() + 2) { lc ->
+                        items(carList[i].location.count()) { lc ->
                             var check by remember {
                                 mutableStateOf(false)
                             }
@@ -101,12 +122,18 @@ fun ChooseCar() {
                                     .padding(8.dp)
                                     .width(250.dp)
                             ) {
-                                Row(modifier = Modifier.padding(4.dp).width(250.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = SpaceBetween) {
-                                    Text(text = "location $lc")
+                                Row(
+                                    modifier = Modifier
+                                        .padding(4.dp)
+                                        .width(250.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = SpaceBetween
+                                ) {
+                                    Text(text = carList[i].location[lc])
 
-                                        CircleCheckbox(check) {
-                                            check = !check
-                                        }
+                                    CircleCheckbox(check) {
+                                        check = !check
+                                    }
 
                                     // Checkbox(checked = check, onCheckedChange = {check =!check})
                                 }
@@ -121,7 +148,7 @@ fun ChooseCar() {
             .width(250.dp),
             onClick = {
 
-        }) {
+            }) {
             Text(text = "Выбрать")
         }
     }

@@ -2,6 +2,6 @@ package com.example.carsharing.repository
 
 import com.example.carsharing.entities.Car
 
-interface ChooseCarRepository {
-    suspend fun getCars():List<Car>
+interface ProfileRepository {
+    suspend fun getCurrentRent(id:String): Car?
 }
