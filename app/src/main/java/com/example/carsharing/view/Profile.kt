@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +18,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -28,13 +30,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.AsyncImage
 import com.example.carsharing.ProfileViewModel
-import com.example.carsharing.R
+import com.example.carsharing.navigation.Screen
 import com.google.firebase.Firebase
 import com.google.firebase.storage.storage
 import org.koin.androidx.compose.getViewModel
@@ -54,8 +54,26 @@ fun Profile(navController: NavController) {
         userId!!
     )
 
+    val email by viewModel.email.observeAsState()
+    viewModel.getEmail()
+
     val currentRent by viewModel.currentRent.observeAsState()
     viewModel.getCurrentRent(userId)
+
+    var prof by remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+    LaunchedEffect(Unit) {
+        val ref =
+            Firebase.storage.reference.child("profile/${email}.jpg")
+        val localFile = File.createTempFile("images", "jpg")
+        ref.getFile(localFile).addOnSuccessListener {
+            prof = BitmapFactory.decodeFile(localFile.absolutePath)
+        }.addOnFailureListener {
+            // Handle any errors
+        }
+    }
+
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -67,17 +85,19 @@ fun Profile(navController: NavController) {
                 .padding(0.dp, 0.dp, 0.dp, 15.dp),
             shape = CircleShape
         ) {
-            AsyncImage(
-                modifier = Modifier
-                    .size(90.dp),
-                model = user?.imageUrl,
-                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
-                error = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "The delasign logo",
-                contentScale = ContentScale.Crop
-            )
+            if (prof != null) {
+                Image(
+                    modifier = Modifier
+                        .size(150.dp)
+                        .clickable {
+                            navController.navigate(Screen.ProfileScreen.route)
+                        },
+                    bitmap = prof!!.asImageBitmap(),
+                    contentDescription = ""
+                )
+            }
         }
-        Text(text = "Zakhar")
+        Text(text = email ?: "loading")
 
         var image by remember {
             mutableStateOf<Bitmap?>(null)
@@ -135,7 +155,7 @@ fun Profile(navController: NavController) {
 
             border = BorderStroke(3.dp, Color.Red),
             onClick = {
-
+                navController.navigate(Screen.MeetScreen.route)
             }) {
             Text(
                 text = "ВЫХОД",

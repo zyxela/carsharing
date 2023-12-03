@@ -39,6 +39,8 @@ import coil.compose.AsyncImage
 import com.example.carsharing.MeetViewModel
 import com.example.carsharing.R
 import com.example.carsharing.navigation.Screen
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseUser
 import org.koin.androidx.compose.getViewModel
 
 @Composable
@@ -52,7 +54,16 @@ fun Meet(navController: NavController) {
 
     val enter by viewModel.enter.observeAsState(false)
     if (enter){
-        navController.navigate(Screen.ChooseCarScreen.route)
+        val auth = FirebaseAuth.getInstance()
+        val user: FirebaseUser? = auth.currentUser
+
+        if (user != null) {
+            val email = user.email
+            if (email == "a@mail.ru")
+                navController.navigate(Screen.AdminScreen.route)
+            else
+                navController.navigate(Screen.ChooseCarScreen.route)
+        }
     }
 
     Column(
@@ -76,7 +87,7 @@ fun Meet(navController: NavController) {
 
                 ),
                 colors = CardDefaults.cardColors(
-                    containerColor = if (isSign == 1) Color.White else Color.Green,
+                    containerColor = if (isSign == 1) Color.White else Color.LightGray,
                 )
             ) {
                 Text(
@@ -108,7 +119,7 @@ fun Meet(navController: NavController) {
                 )
             }
         }
-        Card {
+        Card(colors = CardDefaults.cardColors(Color.LightGray)) {
             Column(verticalArrangement = Arrangement.Center) {
                 if (isSign == 1)
                     SignUp(viewModel)
