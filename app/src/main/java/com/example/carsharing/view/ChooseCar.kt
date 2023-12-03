@@ -1,7 +1,12 @@
 package com.example.carsharing.view
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.Absolute.SpaceBetween
 import androidx.compose.foundation.layout.Box
@@ -19,7 +24,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Circle
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -28,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
@@ -36,28 +41,62 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import com.example.carsharing.ChooseCarViewModel
 import com.example.carsharing.R
+import com.example.carsharing.entities.UserRent
+import com.example.carsharing.navigation.Screen
+import com.google.firebase.Firebase
+import com.google.firebase.storage.storage
 import org.koin.androidx.compose.getViewModel
+import java.io.File
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ChooseCar() {
+fun ChooseCar(navController: NavController) {
 
     val viewModel: ChooseCarViewModel = getViewModel()
+
+    val context = LocalContext.current
+
+    val userId = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        .getString("USER_ID", "HeD4qcjnDQgFv7cQ25rzytfwzTK2")!!
+
+    val email by viewModel.email.observeAsState()
+    viewModel.getUserEmail()
 
     val carList by viewModel.carsList.observeAsState(emptyList())
     viewModel.getCars()
 
+    val abilityToRent by viewModel.abilityToRent.observeAsState()
+    viewModel.checkRent(userId)
+
     val pageState = rememberPagerState {
         carList.size
     }
+
+    var prof by remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+    LaunchedEffect(Unit){
+        val ref =
+            Firebase.storage.reference.child("profile/${email}.jpg")
+        val localFile = File.createTempFile("images", "jpg")
+        ref.getFile(localFile).addOnSuccessListener {
+            prof = BitmapFactory.decodeFile(localFile.absolutePath)
+        }.addOnFailureListener {
+            // Handle any errors
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -67,16 +106,26 @@ fun ChooseCar() {
         Card(
             shape = CircleShape
         ) {
-            AsyncImage(
-                modifier = Modifier.size(50.dp),
-                model = "https://cdn-icons-png.flaticon.com/512/3177/3177440.png",
-                placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
-                error = painterResource(id = R.drawable.ic_launcher_foreground),
-                contentDescription = "The delasign logo",
-                contentScale = ContentScale.Crop
-            )
+            if(prof!=null) {
+                Image(
+                    modifier = Modifier
+                        .size(50.dp)
+                        .clickable {
+                            navController.navigate(Screen.ProfileScreen.route)
+                        },
+                    bitmap = prof!!.asImageBitmap(),
+                    contentDescription = ""
+                )
+            }
         }
     }
+
+    val cars by viewModel.carsList.observeAsState(emptyList())
+    viewModel.getCars()
+    var image by remember {
+        mutableStateOf<Bitmap?>(null)
+    }
+
     Column(
         modifier = Modifier.padding(0.dp, 0.dp, 0.dp, 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -91,19 +140,33 @@ fun ChooseCar() {
                     carList[it]
                 }
             ) { i ->
+
+
+                LaunchedEffect(Unit) {
+                    val ref =
+                        Firebase.storage.reference.child("cars/${cars[i].imageUrl}.jpg")
+                    val localFile = File.createTempFile("images", "jpg")
+                    ref.getFile(localFile).addOnSuccessListener {
+                        image = BitmapFactory.decodeFile(localFile.absolutePath)
+                    }.addOnFailureListener {
+                        // Handle any errors
+                    }
+                }
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Card {
-                        AsyncImage(
-                            modifier = Modifier.size(250.dp, 200.dp),
-                            model = carList[i].imageUrl,
-                            placeholder = painterResource(id = R.drawable.ic_launcher_background),
-                            error = painterResource(id = R.drawable.ic_launcher_foreground),
-                            contentDescription = "The delasign logo",
-                            contentScale = ContentScale.Crop
-                        )
+                        if (image != null) {
+                            Image(
+                                modifier = Modifier
+                                    .size(250.dp, 200.dp),
+                                bitmap = image!!.asImageBitmap(),
+                                contentDescription = "The delasign logo",
+                                contentScale = ContentScale.Crop
+                            )
+                        }
                     }
                     Text(
                         text = carList[i].mark,
@@ -135,22 +198,33 @@ fun ChooseCar() {
                                         check = !check
                                     }
 
-                                    // Checkbox(checked = check, onCheckedChange = {check =!check})
                                 }
                             }
+
                         }
                     }
+
+                    Button(
+                        modifier = Modifier
+                        .width(250.dp),
+                        onClick = {
+                            viewModel.addRent(
+                                UserRent(
+                                    userId,
+                                    carList[i].id
+                                )
+                            )
+                            viewModel.abilityToRent.value = false
+                        },
+                        enabled = abilityToRent!!) {
+                        Text(text = "Выбрать")
+                    }
                 }
+
             }
 
         }
-        Button(modifier = Modifier
-            .width(250.dp),
-            onClick = {
 
-            }) {
-            Text(text = "Выбрать")
-        }
     }
 
 

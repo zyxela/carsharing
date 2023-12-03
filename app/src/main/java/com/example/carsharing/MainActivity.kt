@@ -11,8 +11,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.carsharing.Module.appModule
+import com.example.carsharing.navigation.ScreenGraph
 import com.example.carsharing.ui.theme.CarsharingTheme
+import com.example.carsharing.view.Admin
 import com.example.carsharing.view.ChooseCar
+import com.example.carsharing.view.Meet
 import com.example.carsharing.view.Profile
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
@@ -33,7 +36,7 @@ class MainActivity : ComponentActivity() {
                         androidContext(this@MainActivity)
                         modules(appModule)
                     }
-                    Profile()
+                   ScreenGraph()
                 }
             }
         }

@@ -62,6 +62,7 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("com.google.firebase:firebase-firestore-ktx:24.9.1")
     implementation("com.google.firebase:firebase-firestore:24.9.1")
+    implementation("com.google.firebase:firebase-storage-ktx:20.3.0")
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
@@ -79,7 +80,13 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
     implementation("androidx.compose.runtime:runtime-livedata:1.5.4")
 
-    implementation ("io.coil-kt:coil-compose:2.3.0")
+    implementation ("io.coil-kt:coil-compose:2.5.0")
+
+    implementation ("com.firebaseui:firebase-ui-auth:7.2.0")
+
+    implementation("com.google.firebase:firebase-auth")
+
+    implementation(platform("com.google.firebase:firebase-bom:32.6.0"))
 
 
 }

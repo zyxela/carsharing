@@ -3,9 +3,20 @@ package com.example.carsharing.entities
 import java.io.Serializable
 
 data class Car(
-    val id:String,
-    val mark:String,
-    val imageUrl:String,
-    val location:List<String>,
-    val status: Boolean
-):Serializable
+    val mark: String,
+    var imageUrl: String,
+    val location: List<String>,
+    val status: Boolean = true,
+) : Serializable {
+    var id: String = ""
+
+    constructor(
+        id: String,
+        mark: String,
+        imageUrl: String,
+        location: List<String>,
+        status: Boolean = true,
+    ) : this(mark, imageUrl, location, status) {
+        this.id = id
+    }
+}
